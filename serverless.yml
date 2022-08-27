@@ -1,0 +1,106 @@
+service: serverless
+frameworkVersion: '3'
+custom:
+  tableName: 'exam-schedule-table-${sls:stage}'
+
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  stage: dev
+  region: ap-south-1
+  profile: registration
+  httpApi:   
+    cors: true
+
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource:
+            - Fn::GetAtt: [ examScheduleTable, Arn ]
+  environment:
+    EXAM_SCHEDULE_TABLE: ${self:custom.tableName}
+
+
+functions:
+  hello:
+    handler: handler.hello
+    events:
+      - httpApi:
+          path: /
+          method: get
+  GetLookup:
+    handler: src/lookup/index.GetLookuplam #root
+    events:
+      - httpApi:
+          path: /lookups/{id} #route
+          method: get
+  PostNewSchedule:  #imhere
+    handler: handler.PostNewSchedule
+    events:
+      - httpApi:
+          path: /newSchedule
+          method: post
+  GetNewSchedule:
+    handler: handler.GetNewSchedulelam #root
+    events:
+      - httpApi:
+          path: /newSchedule
+          method: get
+  GetExamSchedule:
+    handler: handler.GetExamSchedulelam #root
+    events:
+      - httpApi:
+          path: /examSchedule
+          method: get
+  GetSubjectsByDepartment:
+    handler: handler.GetSubjectslam
+    events:
+      - httpApi:
+          path: /subject
+          method: get
+  GetSemesterSchedule:
+    handler: src/schedule/index.GetSemesterSchedulelam
+    events:
+      - httpApi:
+          path: /semesterExamSchedule
+          method: get
+  GetSemesterLabSchedule:
+    handler: src/schedule/index.GetSemesterLabSchedulelam
+    events:
+      - httpApi:
+          path: /semesterLaboratorySchedule
+          method: get
+  DeleteSchedule:
+    handler: handler.deleteSchedulelam
+    events:
+      - httpApi:
+          path: /semester-schedule
+          method: delete
+  
+
+resources:
+  Resources:
+    examScheduleTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: PK
+            AttributeType: S
+          - AttributeName: SK
+            AttributeType: S
+        KeySchema:
+          - AttributeName: PK
+            KeyType: HASH
+          - AttributeName: SK
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:custom.tableName}
